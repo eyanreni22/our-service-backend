@@ -4,6 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const http = require("http");
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" }); // temp folder
@@ -30,9 +31,9 @@ const allowedOrigins = [
 const corsOptions = {
   origin: (origin, callback) => {
     if (
-      !origin ||                                // allow server-to-server or curl
-      allowedOrigins.includes(origin) ||        // exact matches
-      /\.vercel\.app$/.test(origin)             // allow any *.vercel.app
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /\.vercel\.app$/.test(origin)
     ) {
       callback(null, true);
     } else {
@@ -77,8 +78,19 @@ app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 
-// ✅ Static Files (images, invoices, public assets)
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ✅ Serve uploads safely (handles spaces & URL encoding)
+app.get("/uploads/:filename", (req, res) => {
+  const filename = decodeURIComponent(req.params.filename);
+  const filePath = path.join(__dirname, "uploads", filename);
+
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ message: "File not found" });
+  }
+});
+
+// Keep other static folders as before
 app.use("/invoices", express.static(path.join(__dirname, "invoices")));
 app.use("/public", express.static(path.join(__dirname, "public")));
 
