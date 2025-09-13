@@ -22,19 +22,17 @@ app.use(express.urlencoded({ extended: true }));
 
 // ✅ Allowed Origins
 const allowedOrigins = [
-  "http://localhost:5173",              // Local Vite dev
-   "https://our-service.vercel.app",    // Main Vercel domain
-   // Your Vercel deploy
-  
+  "http://localhost:5173",                     // Local Vite dev
+  "https://our-service-frontend.vercel.app",   // Your deployed frontend
 ];
 
 // ✅ CORS Middleware
 const corsOptions = {
   origin: (origin, callback) => {
     if (
-      !origin ||
-      allowedOrigins.includes(origin) ||
-      /\.vercel\.app$/.test(origin)         // ✅ matches any *.vercel.app
+      !origin ||                                // allow server-to-server or curl
+      allowedOrigins.includes(origin) ||        // exact matches
+      /\.vercel\.app$/.test(origin)             // allow any *.vercel.app
     ) {
       callback(null, true);
     } else {
@@ -46,6 +44,7 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
+
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // Preflight support
 
